@@ -1,73 +1,546 @@
-# React + TypeScript + Vite
+# MonteLock
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MonteLock is a premium, dark-mode password manager SaaS project focused on secure credential storage, privacy, and a polished cybersecurity user experience.
 
-Currently, two official plugins are available:
+The core product idea is simple: users create an account, set a master password, and store encrypted password entries inside their personal vault.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Brand concept
 
-## React Compiler
+MonteLock combines two ideas:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Monte**: mountain, fortress, elevation, stability, premium security
+- **Lock**: vault, encryption, secrecy, protection
 
-## Expanding the ESLint configuration
+The visual direction is a luxury cybersecurity product: dark, minimal, sharp, calm, and secure.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Brand personality
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Premium
+- Secure
+- Minimal
+- Professional
+- Elegant
+- Quiet power
+- Dark-tech
+- Fortress-grade security
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Visual identity
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Primary colors:
+
+```txt
+Obsidian / Midnight Navy: #0B1020
+Deep Card Surface:        #121826
+Emerald Accent:           #10B981
+Text Primary:             #F8FAFC
+Text Secondary:           #94A3B8
+Silver Accent:            #E2E8F0
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Recommended fonts:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```txt
+Headings: Space Grotesk / Sora / Inter Tight
+Body:     Inter
 ```
+
+Design language:
+
+- Dark-first interface
+- Emerald security accents
+- Rounded cards
+- Subtle borders
+- Premium SaaS layout
+- Minimal animations
+- Security-focused copywriting
+- Calm, confidential, vault-like feeling
+
+Suggested tagline:
+
+```txt
+MonteLock — Your digital vault, elevated.
+```
+
+## Tech stack
+
+This project uses:
+
+- **React**
+- **TypeScript**
+- **Tailwind CSS**
+- **Bun** as the package manager/runtime
+- **Drizzle ORM** for database schema and queries
+- **Neon PostgreSQL** as the hosted database
+- **@neondatabase/serverless** for the Neon database client
+- **drizzle-orm/neon-http** for Drizzle + Neon integration
+- **Framer Motion** for landing page animations
+- **Lucide React** for icons
+
+Important note for contributors and AI agents:
+
+```txt
+Use Bun commands, not npm commands, unless explicitly requested.
+Use Drizzle ORM, not Prisma.
+Use Neon PostgreSQL as the database target.
+```
+
+## Package commands
+
+Install dependencies:
+
+```bash
+bun install
+```
+
+Add dependencies:
+
+```bash
+bun add package-name
+```
+
+Run the app:
+
+```bash
+bun dev
+```
+
+Run a TypeScript file directly:
+
+```bash
+bun src/path/to/file.ts
+```
+
+Push Drizzle schema to Neon:
+
+```bash
+bunx drizzle-kit push --config=drizzle.config.ts
+```
+
+## Environment variables
+
+Create a `.env` file in the project root:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/neondb?sslmode=require&channel_binding=require"
+```
+
+Never commit `.env` to GitHub.
+
+If the database URL is accidentally shared, rotate/reset the Neon database password immediately.
+
+## Database setup
+
+The project uses Drizzle ORM with Neon PostgreSQL.
+
+Recommended structure:
+
+```txt
+src/
+  db/
+    index.ts
+    schema.ts
+    test.ts
+    seed.ts
+
+drizzle.config.ts
+.env
+```
+
+### Database connection
+
+```ts
+// src/db/index.ts
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import * as schema from "./schema";
+
+const sql = neon(process.env.DATABASE_URL!);
+
+export const db = drizzle(sql, { schema });
+```
+
+Make sure dotenv is loaded before using the database:
+
+```ts
+import "dotenv/config";
+```
+
+### Drizzle config
+
+```ts
+// drizzle.config.ts
+import "dotenv/config";
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+## Current database model
+
+MonteLock currently has two main entities:
+
+1. `users`
+2. `passwords`
+
+Relationship:
+
+```txt
+users 1 ─── many passwords
+```
+
+Each user owns many encrypted password entries.
+
+## Users table
+
+The `users` table stores account information and master-password derivation settings.
+
+Fields:
+
+```txt
+id
+username
+email
+password_hash
+master_password_salt
+kdf_algorithm
+kdf_iterations
+created_at
+updated_at
+```
+
+Purpose:
+
+- `username`: unique public username inside the app
+- `email`: unique login/contact email
+- `password_hash`: hash of the user login password
+- `master_password_salt`: random salt generated by the app for deriving the vault encryption key
+- `kdf_algorithm`: selected key derivation algorithm, defaulting to `argon2id`
+- `kdf_iterations`: iteration/work factor value used by the KDF
+- `created_at`: creation timestamp
+- `updated_at`: update timestamp
+
+Important security decision:
+
+```txt
+Users may choose the KDF algorithm as an advanced setting.
+Users should not manually choose their own salt.
+The app must generate salts randomly.
+```
+
+Default KDF direction:
+
+```txt
+kdf_algorithm = "argon2id"
+kdf_iterations = 3
+```
+
+PBKDF2 can also be supported later, but it requires a much higher iteration count, for example around `600000` depending on the final security/performance target.
+
+## Passwords table
+
+The `passwords` table stores encrypted vault entries.
+
+Fields:
+
+```txt
+id
+user_id
+title
+encrypted_username
+encrypted_password
+encrypted_url
+encrypted_notes
+iv
+auth_tag
+created_at
+updated_at
+```
+
+Purpose:
+
+- `user_id`: owner of the vault entry
+- `title`: display name for the entry, for example `GitHub`, `Neon`, `Stripe`
+- `encrypted_username`: encrypted login username/email for that service
+- `encrypted_password`: encrypted password value
+- `encrypted_url`: encrypted website URL
+- `encrypted_notes`: encrypted private notes
+- `iv`: initialization vector for encryption
+- `auth_tag`: authentication tag for authenticated encryption
+- `created_at`: creation timestamp
+- `updated_at`: update timestamp
+
+Important security decision:
+
+```txt
+Do not store actual vault passwords as plain text.
+Store encrypted values only.
+```
+
+## Drizzle schema
+
+```ts
+// src/db/schema.ts
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  integer,
+  pgEnum,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const kdfAlgorithmEnum = pgEnum("kdf_algorithm", ["argon2id", "pbkdf2"]);
+
+export const users = pgTable("users", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  username: varchar("username", { length: 50 }).notNull().unique(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+
+  passwordHash: text("password_hash").notNull(),
+
+  masterPasswordSalt: text("master_password_salt").notNull(),
+
+  kdfAlgorithm: kdfAlgorithmEnum("kdf_algorithm").notNull().default("argon2id"),
+
+  kdfIterations: integer("kdf_iterations").notNull().default(3),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const passwords = pgTable("passwords", {
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  title: varchar("title", { length: 100 }).notNull(),
+
+  encryptedUsername: text("encrypted_username"),
+  encryptedPassword: text("encrypted_password").notNull(),
+  encryptedUrl: text("encrypted_url"),
+  encryptedNotes: text("encrypted_notes"),
+
+  iv: text("iv").notNull(),
+  authTag: text("auth_tag").notNull(),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  passwords: many(passwords),
+}));
+
+export const passwordsRelations = relations(passwords, ({ one }) => ({
+  user: one(users, {
+    fields: [passwords.userId],
+    references: [users.id],
+  }),
+}));
+```
+
+## Testing the database connection
+
+Create:
+
+```ts
+// src/db/test.ts
+import "dotenv/config";
+import { db } from "./index";
+import { users } from "./schema";
+
+const main = async () => {
+  const result = await db.select().from(users).limit(1);
+
+  console.log("Database connected successfully");
+  console.log(result);
+};
+
+main().catch((error) => {
+  console.error("Database connection failed");
+  console.error(error);
+});
+```
+
+Run:
+
+```bash
+bun src/db/test.ts
+```
+
+Expected result:
+
+```txt
+Database connected successfully
+[]
+```
+
+An empty array is fine. It means the table exists but has no rows.
+
+## Creating a test user
+
+Create:
+
+```ts
+// src/db/seed.ts
+import "dotenv/config";
+import { db } from "./index";
+import { users } from "./schema";
+
+const main = async () => {
+  const insertedUser = await db
+    .insert(users)
+    .values({
+      username: "bagii",
+      email: "bagii@example.com",
+      passwordHash: "fake_hash_for_testing",
+      masterPasswordSalt: "fake_salt_for_testing",
+      kdfAlgorithm: "argon2id",
+      kdfIterations: 3,
+    })
+    .returning();
+
+  console.log("User created:");
+  console.log(insertedUser);
+};
+
+main().catch((error) => {
+  console.error("Seed failed:");
+  console.error(error);
+});
+```
+
+Run:
+
+```bash
+bun src/db/seed.ts
+```
+
+Then open Neon Dashboard and check:
+
+```txt
+Tables → users → Data
+```
+
+## Frontend direction
+
+The landing page should be a premium cybersecurity SaaS landing page.
+
+Design requirements:
+
+- Dark mode
+- Emerald green accents
+- Premium gradients
+- Animated navbar
+- Strong hero section
+- Vault/security dashboard mockup
+- Framer Motion animations
+- Lucide icons
+- Tailwind-only styling
+- One React component where possible
+
+Installed frontend animation/icon dependencies:
+
+```bash
+bun add framer-motion lucide-react
+```
+
+## Current landing page direction
+
+The landing page emphasizes:
+
+- secrecy
+- encryption
+- premium vault experience
+- dark security dashboard aesthetics
+- mountain/fortress identity
+- emerald glow accents
+- clean SaaS sections
+
+Core headline:
+
+```txt
+Your digital vault, elevated.
+```
+
+Core message:
+
+```txt
+MonteLock protects credentials like a mountain fortress: silent, hardened, and hidden from everyone except the person holding the master key.
+```
+
+## Copywriting style
+
+Use phrases like:
+
+```txt
+Your digital vault, elevated.
+Fortress-grade password security.
+Silent protection for private credentials.
+Zero plain-text vault secrets.
+Private by default.
+Built for secrets that should never become visible.
+```
+
+Avoid phrases that feel:
+
+- childish
+- playful
+- crypto-bro
+- generic hacker aesthetic
+- noisy gaming UI
+- cheap cyberpunk
+
+## Development preferences
+
+Follow these style preferences when contributing:
+
+```txt
+Use React + TypeScript.
+Use Tailwind CSS for styling.
+Use Bun commands.
+Use Drizzle ORM for database work.
+Use Neon PostgreSQL as the database.
+Keep components clean and modern.
+Prefer arrow functions.
+Do not replace Drizzle with Prisma.
+Do not replace Bun with npm unless explicitly asked.
+Keep the app dark-mode-first.
+```
+
+## Short copyable context for AI agents
+
+```txt
+We are building MonteLock, a premium dark-mode password manager SaaS. The product identity is luxury cybersecurity: mountain fortress + digital vault + emerald dark-tech aesthetic. Tech stack: React, TypeScript, Tailwind CSS, Bun, Drizzle ORM, Neon PostgreSQL, @neondatabase/serverless, drizzle-orm/neon-http, Framer Motion, and Lucide React. Use Bun commands, not npm. Use Drizzle ORM, not Prisma. The database has two core entities: users and passwords. Users have username, email, password_hash, master_password_salt, kdf_algorithm, kdf_iterations, created_at, updated_at. Password entries belong to users and store title, encrypted_username, encrypted_password, encrypted_url, encrypted_notes, iv, auth_tag, created_at, updated_at. Users may choose the KDF algorithm as an advanced setting, but salts must be randomly generated by the app. The default KDF direction is argon2id with kdf_iterations = 3. The frontend should feel premium, secure, minimal, dark, emerald-accented, and vault-like. Prioritize secrecy, encryption, calm power, and polished SaaS UX.
+```
+
+## Security notes
+
+This project is a password manager, so security decisions matter.
+
+Basic rules:
+
+```txt
+Never store real passwords as plain text.
+Never commit .env files.
+Never expose DATABASE_URL.
+Generate salts randomly.
+Use strong password hashing for login passwords.
+Use proper authenticated encryption for vault secrets.
+Do not invent cryptographic algorithms manually.
+Use trusted libraries.
+```
+
+For development/testing only, fake placeholder values such as `fake_hash_for_testing` and `fake_salt_for_testing` are acceptable. They must not be used in production.
