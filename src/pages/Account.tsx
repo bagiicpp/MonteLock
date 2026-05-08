@@ -1,5 +1,3 @@
-// src/pages/Account.tsx
-import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { Key, ShieldCheck, LogOut } from "lucide-react";
 
