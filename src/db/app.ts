@@ -3,7 +3,6 @@ import { jwt } from "@elysia/jwt";
 import { authRoutes } from "./routes/authRoutes";
 
 const app = new Elysia()
-  // 2. Configure the JWT plugin
   .use(
     jwt({
       name: "jwt",

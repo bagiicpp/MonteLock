@@ -544,3 +544,47 @@ Use trusted libraries.
 ```
 
 For development/testing only, fake placeholder values such as `fake_hash_for_testing` and `fake_salt_for_testing` are acceptable. They must not be used in production.
+
+# MonteLock OS - Blagoja Update
+
+## Progress Update - Sector 1
+
+**Lead Architect:** Blagoja  
+**Contributors:** Petar, Crni
+
+### 🚀 Current Status
+
+We have successfully established the foundational Zero-Knowledge architecture and the core visual environment for MonteLock OS. The system is currently running on a Bun/Elysia backend with a React/Tailwind frontend, optimized for high performance and strict security.
+
+### 🔒 Security & Auth Flow (Completed)
+
+- **Zero-Knowledge Provisioning:** Master cipherphrases never touch the server. Keys are derived strictly on the client side using Argon2id (`hash-wasm`) with a fallback to WebCrypto PBKDF2.
+- **The Salt Gate:** A secure handshake protocol to fetch or generate unique user salts for the Key Derivation Function (KDF) before login or registration.
+- **OTP Verification:** Implemented Authorization Codes (OTP) required for final vault unlocking.
+- **Session Management:** Built a native Bun JWT implementation with secure, `HttpOnly` cookies to protect against XSS attacks.
+
+### 💻 Backend Infrastructure (Completed)
+
+- **Runtime:** Bun
+- **Framework:** ElysiaJS
+- **Database:** Neon DB (Serverless Postgres)
+- **ORM:** Drizzle ORM
+- **API Routes:** Endpoints fully operational for `/api/auth/salt`, `/api/auth/register`, `/api/auth/login`, and `/api/auth/verify-otp`.
+
+### 🎨 Frontend & UI/UX (Completed)
+
+- **Framework:** React (Vite) + Tailwind CSS.
+- **Theme:** "Precision-Industrial" aesthetic (Deep Navy `#03050d`, Emerald `#10b981` accents, Monospace typography).
+- **Auth Gates:** Fully responsive, glassmorphism authentication card with advanced KDF control toggles and dynamic success/error states.
+- **Dashboard:** Interactive data grid utilizing `framer-motion` for staggered boot-up animations, precise hover states, and service categorization (Web, Server, DB, System).
+- **Environment:** Integrated an HTML5 Canvas `ShapeGrid` background for an animated, high-performance "scanning" environment that doesn't drag down the main thread.
+
+### 🚧 Next Steps / Pending Tasks
+
+- **[Petar/Crni] Vault Encryption/Decryption:** Implement the AES-GCM logic in the frontend. We need to use the `masterKeyCache` currently stored in the React Context to encrypt the password blobs _before_ sending them to the Elysia backend.
+- **[Petar/Crni] Database Schema Expansion:** Build out the Drizzle schema for the `vault_items` table to store the encrypted payload blobs.
+- **[Team] Audit Log & Generator:** Hook up the UI for the secure cipherphrase generator and the metadata event tracker (e.g., failed OTP attempts) in the dashboard side-navigation.
+
+---
+
+_System Status: SECURE_
