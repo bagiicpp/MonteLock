@@ -1,4 +1,3 @@
-// src/db/seed.ts
 import "dotenv/config";
 import { db } from "./index";
 import { users } from "./schema";

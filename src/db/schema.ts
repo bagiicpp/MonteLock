@@ -30,6 +30,23 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const otps = pgTable("otps", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  code: varchar("code", { length: 6 }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const otpsRelations = relations(otps, ({ one }) => ({
+  user: one(users, {
+    fields: [otps.userId],
+    references: [users.id],
+  }),
+}));
+
 export const passwords = pgTable("passwords", {
   id: uuid("id").defaultRandom().primaryKey(),
 
