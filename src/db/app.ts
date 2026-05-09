@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { jwt } from "@elysia/jwt";
 import { authRoutes } from "./routes/authRoutes";
-
+import { passwordRoutes } from "./routes/passwordRoutes";
 const app = new Elysia()
   .use(
     jwt({
@@ -19,6 +19,7 @@ const app = new Elysia()
     console.log(`[NETWORK] ${request.method} ${request.url} -> ${set.status}`);
   })
   .use(authRoutes)
+  .use(passwordRoutes)
   .listen(3000);
 
 console.log(`[ MonteLock OS ] Booting server on port ${app.server?.port}...`);
