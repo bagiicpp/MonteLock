@@ -10,7 +10,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  ShieldCheck,
   AlertCircle,
   Fingerprint,
 } from "lucide-react";

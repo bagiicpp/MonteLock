@@ -2,7 +2,7 @@
 import { Elysia, t } from "elysia";
 import { jwt } from "@elysia/jwt";
 import { db } from "../index";
-import { passwords } from "../schema";
+import { passwords, users } from "../schema";
 import { eq } from "drizzle-orm";
 
 export const passwordRoutes = new Elysia({ prefix: "/api/passwords" })
