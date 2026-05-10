@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { argon2id } from "hash-wasm";
 import {
   Lock,
@@ -7,9 +7,11 @@ import {
   Settings2,
   ChevronDown,
   ChevronUp,
+  Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import ShapeGrid from "../components/ShapeGrid";
 
 type AuthStep = "INIT" | "OTP";
@@ -25,8 +27,8 @@ interface AuthState {
 }
 
 export const AuthGates = () => {
+  const { user, isLoadingSession, login } = useAuth();
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const [state, setState] = useState<AuthState>({
     step: "INIT",
@@ -45,6 +47,21 @@ export const AuthGates = () => {
   const [kdfAlgorithm, setKdfAlgorithm] = useState<KdfAlgorithm>("argon2id");
   const [kdfIterations, setKdfIterations] = useState(3);
 
+  useEffect(() => {
+    if (!isLoadingSession && user) {
+      navigate("/dashboard");
+    }
+  }, [user, isLoadingSession, navigate]);
+
+  if (isLoadingSession) {
+    return (
+      <div className="min-h-screen bg-[#03050d] flex items-center justify-center">
+        <Loader2 className="animate-spin h-8 w-8 text-emerald-400" />
+      </div>
+    );
+  }
+
+  // 3. HELPER FUNCTIONS
   const handleAlgoChange = (algo: KdfAlgorithm) => {
     setKdfAlgorithm(algo);
   };
@@ -58,7 +75,7 @@ export const AuthGates = () => {
     const enc = new TextEncoder();
 
     if (algo === "argon2id") {
-      const saltBytes = enc.encode(salt);
+      const saltBytes = enc.encode(salt + "auth"); // Domain separation for auth
       const authHashHex = await argon2id({
         password: pass,
         salt: saltBytes,
@@ -69,7 +86,7 @@ export const AuthGates = () => {
         outputType: "hex",
       });
 
-      const vaultSaltBytes = enc.encode(salt + "vault");
+      const vaultSaltBytes = enc.encode(salt + "vault"); // Domain separation for vault
       const vaultKeyHex = await argon2id({
         password: pass,
         salt: vaultSaltBytes,
@@ -238,8 +255,17 @@ export const AuthGates = () => {
     }
   };
 
+  // 4. MAIN RENDER
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 font-mono overflow-hidden bg-[#03050d]">
+      {/* Return to Base / Home Link */}
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-emerald-400 transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" /> Return to Base
+      </Link>
+
       <div className="absolute inset-0 z-0 w-full h-full">
         <ShapeGrid
           speed={0.3}
@@ -252,7 +278,7 @@ export const AuthGates = () => {
         />
       </div>
 
-      {/* Foreground Auth Card with backdrop-blur for glass effect */}
+      {/* Foreground Auth Card */}
       <div className="relative z-10 w-full max-w-md border border-emerald-500/20 bg-[#0B1020]/90 backdrop-blur-2xl p-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-xl">
         <div className="flex items-center gap-3 border-b border-white/10 pb-5 mb-6">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-400/10 border border-emerald-300/20 text-emerald-300">

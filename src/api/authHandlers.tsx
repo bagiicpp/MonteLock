@@ -2,6 +2,7 @@ import { db } from "../db/index";
 import { users, otps } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
+import { sendVaultOtp } from "../lib/email";
 
 const hashForDatabase = async (clientAuthHash: string) =>
   await Bun.password.hash(clientAuthHash);
@@ -80,19 +81,24 @@ export const handleRegister = async ({
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
     await db.insert(otps).values({ userId: user.id, code, expiresAt });
 
-    console.log(`[DEV ONLY] OTP for ${email}: ${code}`);
+    console.log("Attempting to send email via Resend...");
+    const emailResult = await sendVaultOtp(user.email, code, user.username);
+    console.log("Resend API Response:", emailResult);
+
     return { status: "OTP_SENT" };
   } catch (error: any) {
     // 23505 is the standard PostgreSQL error code for a Unique Violation
     if (error.code === "23505") {
       set.status = 400;
-      return "Operator handle or Comm Vector (email) is already registered.";
+      return {
+        error: "Operator handle or Comm Vector (email) is already registered.",
+      };
     }
 
     // Log any other unexpected database or runtime errors so you can see them
     console.error("[SYSTEM FAULT] Registration failed:", error);
     set.status = 500;
-    return "Internal server error during vault provisioning.";
+    return { error: "Internal server error during vault provisioning." };
   }
 };
 
@@ -120,7 +126,10 @@ export const handleLogin = async ({ body, set }: { body: any; set: any }) => {
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await db.insert(otps).values({ userId: user.id, code, expiresAt });
 
-  console.log(`[DEV ONLY] OTP for ${email}: ${code}`);
+  sendVaultOtp(user.email, code, user.username).catch((err) =>
+    console.error("[RESEND ERROR] Failed to dispatch comm vector:", err),
+  );
+
   return { status: "OTP_SENT" };
 };
 
@@ -165,4 +174,129 @@ export const handleVerifyOTP = async ({
   return {
     user: { id: user.id, username: user.username, email: user.email },
   };
+};
+
+export const handleGetSession = async ({
+  request,
+  jwt,
+  set,
+}: {
+  request: any;
+  jwt: any;
+  set: any;
+}) => {
+  const cookie = request.headers.get("cookie");
+  if (!cookie) {
+    set.status = 401;
+    return { error: "No session active." };
+  }
+
+  const sessionMatch = cookie.match(/session=([^;]+)/);
+  if (!sessionMatch) {
+    set.status = 401;
+    return { error: "Invalid session cookie." };
+  }
+
+  try {
+    const payload = await jwt.verify(sessionMatch[1]);
+    if (!payload || !payload.email) throw new Error("Invalid payload");
+
+    // Fetch the user and salt from the grid
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, payload.email));
+
+    if (!user) {
+      set.status = 401;
+      return { error: "Operator not found." };
+    }
+
+    return {
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        masterPasswordSalt: user.masterPasswordSalt, // <-- Pass the salt back to the client
+      },
+    };
+  } catch (error) {
+    set.status = 401;
+    return { error: "Session verification failed." };
+  }
+};
+
+export const handleChangePassword = async ({
+  body,
+  set,
+  jwt,
+  request,
+}: {
+  body: any;
+  set: any;
+  jwt: any;
+  request: any;
+}) => {
+  try {
+    const cookie = request.headers.get("cookie");
+    if (!cookie) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    const sessionMatch = cookie.match(/session=([^;]+)/);
+    if (!sessionMatch) {
+      set.status = 401;
+      return { error: "No session" };
+    }
+
+    const payload = await jwt.verify(sessionMatch[1]);
+    if (!payload || !payload.email) {
+      set.status = 401;
+      return { error: "Invalid session" };
+    }
+
+    const { currentAuthHash, newAuthHash, newSalt } = body;
+
+    // Fetch user to verify their current password hash
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, payload.email));
+
+    if (!user) {
+      set.status = 404;
+      return { error: "Operator not found." };
+    }
+
+    // Verify current auth hash using Bun.password.verify
+    const isCurrentValid = await Bun.password.verify(
+      currentAuthHash,
+      user.passwordHash,
+    );
+
+    if (!isCurrentValid) {
+      set.status = 401;
+      return { error: "Invalid current cipherphrase. Key cycle aborted." };
+    }
+
+    // Hash the NEW auth hash for the database
+    const hashedNewAuthHash = await Bun.password.hash(newAuthHash);
+
+    // Update the database with the new KDF parameters
+    await db
+      .update(users)
+      .set({
+        passwordHash: hashedNewAuthHash,
+        masterPasswordSalt: newSalt,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    return { success: true, message: "KDF parameters updated successfully." };
+  } catch (error) {
+    console.error("[CRYPTO ERROR] Password cycle failed:", error);
+    set.status = 500;
+    return { error: "Failed to cycle master key on the server." };
+  }
 };

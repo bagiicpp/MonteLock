@@ -8,6 +8,7 @@ import {
   KeyRound,
   Shield,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router";
 
 interface HeroSectionProps {
@@ -21,6 +22,7 @@ export const HeroSection = ({
   heroScale,
   rotateVault,
 }: HeroSectionProps) => {
+  const { user } = useAuth();
   const vaultEntries = [
     {
       name: "Neon Database",
@@ -85,10 +87,10 @@ export const HeroSection = ({
             className="mt-10 flex flex-col gap-4 sm:flex-row"
           >
             <Link
-              to="/auth"
+              to={user ? "/dashboard" : "/auth"}
               className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-emerald-400 px-7 py-4 text-base font-bold text-[#04100b] shadow-[0_0_65px_rgba(16,185,129,0.46)] transition hover:-translate-y-1 hover:bg-emerald-300"
             >
-              Enter the fortress
+              {user ? "Access your vault" : "Enter the fortress"}
               <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
             </Link>
             <a

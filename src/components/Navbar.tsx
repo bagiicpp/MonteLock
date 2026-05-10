@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { Mountain, ArrowRight, Menu } from "lucide-react";
 import { Link } from "react-router";
+import { useAuth } from "../context/AuthContext";
+import { User } from "lucide-react";
 
 export const Navbar = () => {
+  const { user } = useAuth();
+
   return (
     <motion.nav
       initial={{ y: -80, opacity: 0 }}
@@ -39,13 +43,26 @@ export const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* NEW: Account Button (Only shows if logged in) */}
+          {user && (
+            <Link
+              to="/account"
+              className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/[0.08] md:flex"
+            >
+              <User className="h-4 w-4" />
+              Account
+            </Link>
+          )}
+
+          {/* MODIFIED: Dynamic Vault/Login Button */}
           <Link
-            to="/auth"
+            to={user ? "/dashboard" : "/auth"}
             className="group hidden items-center gap-2 rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-semibold text-[#04100b] shadow-[0_0_36px_rgba(16,185,129,0.35)] transition hover:-translate-y-0.5 hover:bg-emerald-300 md:flex"
           >
-            Open vault
+            {user ? "Enter vault" : "Open vault"}
             <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </Link>
+
           <button className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] lg:hidden">
             <Menu className="h-5 w-5" />
           </button>

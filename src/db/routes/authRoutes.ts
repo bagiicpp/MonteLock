@@ -7,6 +7,8 @@ import {
   handleSaltRequest,
   handleRegister,
   handleLogin,
+  handleGetSession,
+  handleChangePassword,
 } from "../../api/authHandlers";
 
 export const authRoutes = new Elysia({ prefix: "/api/auth" })
@@ -16,9 +18,11 @@ export const authRoutes = new Elysia({ prefix: "/api/auth" })
       secret: process.env.JWT_SECRET || "MONTE_LOCK_V1_SECRET_KEY",
     }),
   )
+  .get("/session", handleGetSession)
   .post("/salt", handleSaltRequest)
   .post("/register", handleRegister)
   .post("/login", handleLogin)
+  .post("/change-password", handleChangePassword)
   .post(
     "/verify-otp",
     async ({ body, set, jwt }) => {
@@ -58,6 +62,7 @@ export const authRoutes = new Elysia({ prefix: "/api/auth" })
           id: foundUser.id,
           username: foundUser.username,
           email: foundUser.email,
+          masterPasswordSalt: foundUser.masterPasswordSalt,
         },
       };
     },
@@ -67,4 +72,9 @@ export const authRoutes = new Elysia({ prefix: "/api/auth" })
         code: t.String(),
       }),
     },
-  );
+  )
+  .post("/logout", ({ set }) => {
+    set.headers["Set-Cookie"] =
+      "session=; HttpOnly; Path=/; SameSite=Strict; Max-Age=0";
+    return { success: true, message: "Operator session terminated." };
+  });

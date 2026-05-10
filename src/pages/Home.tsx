@@ -1,4 +1,3 @@
-// src/pages/Home.tsx
 import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 import { Navbar } from "../components/Navbar";
 import { HeroSection } from "../components/HeroSection";
@@ -26,7 +25,6 @@ import {
   WandSparkles,
 } from "lucide-react";
 
-// Static data extracted to prevent recreation on every render
 const features = [
   {
     icon: ShieldCheck,
@@ -130,12 +128,10 @@ const Home = () => {
     mass: 0.35,
   });
 
-  // These drive the Hero Section animations
   const heroY = useTransform(smoothProgress, [0, 1], [0, -240]);
   const heroScale = useTransform(smoothProgress, [0, 0.35], [1, 0.86]);
   const rotateVault = useTransform(smoothProgress, [0, 1], [0, 70]);
 
-  // Global progress line
   const lineWidth = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
 
   return (
@@ -145,7 +141,6 @@ const Home = () => {
         className="fixed left-0 top-0 z-[80] h-1 bg-gradient-to-r from-emerald-500 via-teal-300 to-emerald-100"
       />
 
-      {/* Global Background Effects */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_16%_12%,rgba(16,185,129,0.28),transparent_28%),radial-gradient(circle_at_82%_8%,rgba(45,212,191,0.18),transparent_32%),radial-gradient(circle_at_50%_100%,rgba(16,185,129,0.12),transparent_35%),linear-gradient(180deg,rgba(3,5,13,0),#03050d_76%)]" />
         <div className="absolute inset-0 opacity-[0.045] [background-image:linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] [background-size:58px_58px]" />

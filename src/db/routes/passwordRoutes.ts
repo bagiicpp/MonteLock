@@ -113,3 +113,78 @@ export const passwordRoutes = new Elysia({ prefix: "/api/passwords" })
     await db.delete(passwords).where(eq(passwords.id, params.id));
     return { success: true };
   });
+
+export const handleChangePassword = async ({
+  body,
+  set,
+  jwt,
+  request,
+}: {
+  body: any;
+  set: any;
+  jwt: any;
+  request: any;
+}) => {
+  try {
+    const cookie = request.headers.get("cookie");
+    if (!cookie) {
+      set.status = 401;
+      return { error: "Unauthorized" };
+    }
+
+    const sessionMatch = cookie.match(/session=([^;]+)/);
+    if (!sessionMatch) {
+      set.status = 401;
+      return { error: "No session" };
+    }
+
+    const payload = await jwt.verify(sessionMatch[1]);
+    if (!payload || !payload.email) {
+      set.status = 401;
+      return { error: "Invalid session" };
+    }
+
+    const { currentAuthHash, newAuthHash, newSalt } = body;
+
+    // Fetch user to verify their current password hash
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, payload.email));
+
+    if (!user) {
+      set.status = 404;
+      return { error: "Operator not found." };
+    }
+
+    // Verify current auth hash using Bun.password.verify
+    const isCurrentValid = await Bun.password.verify(
+      currentAuthHash,
+      user.passwordHash,
+    );
+
+    if (!isCurrentValid) {
+      set.status = 401;
+      return { error: "Invalid current cipherphrase. Key cycle aborted." };
+    }
+
+    // Hash the NEW auth hash for the database
+    const hashedNewAuthHash = await Bun.password.hash(newAuthHash);
+
+    // Update the database with the new KDF parameters
+    await db
+      .update(users)
+      .set({
+        passwordHash: hashedNewAuthHash,
+        masterPasswordSalt: newSalt,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, user.id));
+
+    return { success: true, message: "KDF parameters updated successfully." };
+  } catch (error) {
+    console.error("[CRYPTO ERROR] Password cycle failed:", error);
+    set.status = 500;
+    return { error: "Failed to cycle master key on the server." };
+  }
+};
